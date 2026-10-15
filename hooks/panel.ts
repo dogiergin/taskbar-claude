@@ -322,18 +322,22 @@ export function summaryChips(a: PanelArgs): Chip[][] {
 }
 
 /**
- * The summary as buttons, for surfaces whose drawn regions take no clicks or
- * no keyboard (the terminal outside fullscreen, VS Code): the same chips, each
- * a button the band's focus ring reaches (ctrl+x tab) with a digit hotkey.
+ * The summary where no drawn region takes clicks: the same bordered chips as
+ * the desktop's. On the terminal (`everyChip`) each chip is a button the focus
+ * ring reaches (ctrl+x tab) with a digit hotkey. Elsewhere (VS Code, mobile)
+ * a button is drawn as the editor's own filled button, so only the chips that
+ * act are buttons, the style switch and the way into the details, and the
+ * rest are plain text, as they read on the desktop.
  */
-export function chipButtons(E: Els, a: PanelArgs): RenderElement {
+export function chipButtons(E: Els, a: PanelArgs, everyChip = true): RenderElement {
   const { Box, Button, Text } = E
   let hotkey = 0
   const rows = summaryChips(a).map((row, r) =>
     Box({
       key: `usage-row-${r}`,
       flexDirection: 'row',
-      flexWrap: 'wrap',
+      // Four to a row, shrinking to fit; a phone-narrow band wraps to two.
+      flexWrap: a.width < 70 ? 'wrap' : 'nowrap',
       columnGap: 1,
       children: row.map(c => {
         const parts: RenderElement[] = []
@@ -341,7 +345,8 @@ export function chipButtons(E: Els, a: PanelArgs): RenderElement {
         if (c.label) parts.push(Text({ bold: true, color: 'subtle', children: `${c.label}  ` }))
         parts.push(Text({ bold: true, color: c.tone, children: c.value }))
         if (c.extra) parts.push(Text({ bold: true, color: 'text', children: `  ${c.extra}` }))
-        const press = c.key === 'usage-mode' ? a.onCombat : c.clickable ? a.onToggle : null
+        const acts = everyChip ? c.clickable : c.key === 'usage-mode' || c.key === 'usage-open-more'
+        const press = !acts ? null : c.key === 'usage-mode' ? a.onCombat : a.onToggle
         hotkey += press ? 1 : 0
         return Box({
           key: `chip-${c.key}`,
@@ -576,8 +581,8 @@ function details(E: Els, a: PanelArgs): RenderElement {
     key: 'usage',
     flexDirection: 'column',
     children: [
-      Box({ key: 'row-figures', flexDirection: 'row', flexWrap: 'wrap', columnGap: 1, children: top }),
-      Box({ key: 'row-progress', flexDirection: 'row', flexWrap: 'wrap', columnGap: 1, children: bottom }),
+      Box({ key: 'row-figures', flexDirection: 'row', flexWrap: narrow ? 'wrap' : 'nowrap', columnGap: 1, children: top }),
+      Box({ key: 'row-progress', flexDirection: 'row', flexWrap: narrow ? 'wrap' : 'nowrap', columnGap: 1, children: bottom }),
     ],
   })
 }

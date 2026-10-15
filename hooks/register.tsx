@@ -539,7 +539,7 @@ export const register: Register = (on, options) => {
       // mobile has a Select that draws nothing: take it away, and the panel
       // picks weapons with buttons there.
       const els = e.surface === 'mobile' ? { ...ui, Select: undefined } : ui
-      let usage = opens ? usageBlock(els, args) : chipButtons(els, args)
+      let usage = opens ? usageBlock(els, args) : chipButtons(els, args, false)
       if (!opens && e.surface === 'desktop') {
         const { Client } = $.ui.resolve(e)
         usage = <Client key="chips" module="./chips.ts" width={cols} props={{ rows: summaryChips(args), cols }} />
@@ -548,7 +548,11 @@ export const register: Register = (on, options) => {
       // then resting by the fire until the next one.
       const mode =
         s.stage === 'win' ? 'win' : s.stage === 'wake' ? 'wake' : working ? 'fight' : s.awake ? 'camp' : 'sleep'
-      const width = Math.min(1200, Math.max(360, e.props.bodyColumns * 8))
+      // The desktop sizes the scene to the band in pixels. VS Code's cells are
+      // wider than the desktop's, so there the scene is drawn generously and
+      // left to scale down to the band's full width.
+      const fitsBand = e.surface !== 'desktop'
+      const width = Math.min(1200, Math.max(360, e.props.bodyColumns * (fitsBand ? 11 : 8)))
       if (!showScene) return <Box flexDirection="column">{usage}</Box>
       return (
         <Box flexDirection="column">
@@ -556,8 +560,7 @@ export const register: Register = (on, options) => {
           <Svg
             source={arenaSvg(mode, width, turnWeapons ?? weaponsFor(s), turnTier ?? gearTier(levelFor(s.totalKills)))}
             alt="Claude fights bugs while it works"
-            width={width}
-            height={SVG_HEIGHT}
+            {...(fitsBand ? {} : { width, height: SVG_HEIGHT })}
             isInteractive
           />
         </Box>

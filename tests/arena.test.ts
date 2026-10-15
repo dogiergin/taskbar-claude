@@ -279,3 +279,15 @@ test('where vectors draw, a short band keeps ring charts and never falls back to
   expect(await ui.find({ text: /░/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('VS Code draws the chips as the desktop reads them: only the acting ones are buttons', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 40, 90), surface: 'vscode' })
+  expect(await ui.find({ type: 'Button', key: 'usage-open-more' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'usage-mode' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'usage-open-level' })).toBeUndefined()
+  expect(await ui.find({ text: /SV/ })).toBeDefined()
+  // The scene is left to fill the band: no fixed pixel size.
+  const scene = (await arena(ui))?.props as { width?: number } | undefined
+  expect(scene?.width).toBeUndefined()
+  await ui.unmount()
+})

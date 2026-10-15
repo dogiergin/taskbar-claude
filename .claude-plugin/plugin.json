@@ -1,0 +1,35 @@
+{
+  "name": "taskbar-claude",
+  "version": "1.0.0",
+  "description": "Unofficial community plugin. Claude battles bugs above the prompt while it works: a smooth animated arena, levels and weapons, with live context, limit and plan readouts.",
+  "author": {
+    "name": "edogukanergin",
+    "url": "https://github.com/dogiergin"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "auto follows the language you write to Claude in; tr or en pins one.",
+      "options": [
+        "auto",
+        "tr",
+        "en"
+      ],
+      "default": "auto"
+    },
+    "sync": {
+      "type": "string",
+      "title": "Sync between computers",
+      "description": "on turns on sharing the kill count through a private GitHub gist (needs the gh CLI, signed in); the panel's switch can still turn it off.",
+      "options": [
+        "off",
+        "on"
+      ],
+      "default": "off"
+    }
+  },
+  "homepage": "https://github.com/dogiergin/taskbar-claude",
+  "license": "MIT"
+}

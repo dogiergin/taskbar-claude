@@ -503,18 +503,21 @@ export const register: Register = (on, options) => {
     // opens the panel only where it fits beside the scene.
     const room = e.props.maxRows
     const sceneRows = vector ? SCENE_ROWS : 6
+    // Where vectors draw, the figures are always ring charts: a smaller ring
+    // when room is short, never a bar. Bars are the terminal's alone.
     const layouts = vector
       ? [
           { ring: 52, scene: true },
+          { ring: 36, scene: true },
           { ring: 52, scene: false },
-          { ring: 0, scene: false },
+          { ring: 36, scene: false },
         ]
       : [
           { ring: 0, scene: true },
           { ring: 0, scene: false },
         ]
     const fits = (l: { ring: number; scene: boolean }) => panelRows(l.ring) + (l.scene ? sceneRows : 0) <= room
-    const layout = layouts.find(fits) ?? layouts[layouts.length - 1] ?? { ring: 0, scene: false }
+    const layout = layouts.find(fits) ?? layouts[layouts.length - 1] ?? { ring: vector ? 36 : 0, scene: false }
     const opens = isOpen || (isPeeking && fits({ ring: vector ? 52 : 0, scene: true }))
     const showScene = !opens || layout.scene
     const args: PanelArgs = {

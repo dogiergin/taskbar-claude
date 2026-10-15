@@ -8,6 +8,18 @@
 
 [Türkçe açıklama aşağıda ↓](#-türkçe)
 
+## Why use it
+
+Claude Code shows you little of what you are spending while it works. Task Bar Claude keeps it all one click away, above the prompt:
+
+![The usage panel: context, 5-hour and weekly limits, plan, level and weapon](docs/panel.svg)
+
+- **Know before you hit a wall.** Ring charts for the context window and the 5-hour and weekly limits, with the exact reset time. You see 99% coming before a request is refused.
+- **No false alarms about money.** On a Pro or Max subscription it says *no extra charge*. The dollar figure Claude Code tracks is only what the same work would cost through the API, and here it is labelled as such.
+- **Context that fills up is no surprise.** You see how many tokens are free before older messages get summarized.
+- **Waiting is fun.** While Claude works, it fights. Your level and weapons grow with every session, on every computer you use.
+
+
 ## Install
 
 In a Claude Code **terminal** session:
@@ -91,6 +103,16 @@ Bir Claude Code **terminal** oturumunda:
 Marketplace'i eklemek için `y`, sonra **user** kapsamını seçin (Enter). Bant hemen ve sonraki tüm oturumlarda görünür: terminal, masaüstü uygulamasının Code sekmesi ve VS Code.
 
 Claude Code **2.1.287 veya üstü** gerekir.
+
+### Neden kullanmalı
+
+Claude Code çalışırken ne kadar harcadığınızı pek göstermez. Task Bar Claude hepsini prompt'un üstünde, tek tıkla gösterir:
+
+![Kullanım paneli](docs/panel.svg)
+
+- **Duvara çarpmadan görün:** Bağlam penceresi, 5 saatlik ve haftalık limitler halka grafiklerle, sıfırlanma saatleriyle birlikte.
+- **Para konusunda yanlış alarm yok:** Abonelikte *ek ücret yok* yazar. Claude Code'un tuttuğu dolar tutarı yalnızca API fiyatıyla karşılığıdır ve öyle etiketlenir.
+- **Beklemek eğlenceli:** Claude çalışırken savaşır; seviyeniz ve silahlarınız her oturumda, her bilgisayarda büyür.
 
 ### Neler var
 

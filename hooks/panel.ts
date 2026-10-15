@@ -213,7 +213,7 @@ function ringSvg(fraction: number, color: string, label: string, sub?: string, s
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 80 80">
 <circle cx="40" cy="40" r="${r}" fill="none" stroke="${RING.track}" stroke-opacity=".28" stroke-width="10"/>
 <circle cx="40" cy="40" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 40 40)"/>
-<text x="40" y="${y}" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="${size < 64 ? (label.length > 5 ? 17 : 22) : label.length > 5 ? 13 : 16}" font-weight="700" fill="${color}">${label}</text>
+<text x="40" y="${y}" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="${size < 64 ? (label.length > 3 ? 17 : 22) : label.length > 5 ? 13 : 16}" font-weight="700" fill="${color}">${label}</text>
 ${sub ? `<text x="40" y="54" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="10" font-weight="600" fill="${color}">${sub}</text>` : ''}
 </svg>`
 }

@@ -255,3 +255,12 @@ test('the shared ledger keeps every computer whole and never loses kills', async
   // Unreadable gist text is an empty ledger, not a crash.
   expect(parseLedger('{nope').machines).toEqual({})
 })
+
+test('where vectors draw, a short band keeps ring charts and never falls back to bars', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 12, 120), surface: 'desktop' })
+  await ui.post({ chip: 'usage-open-more' }, { in: 'chips' })
+  const rings = await ui.findAll({ type: 'Svg' })
+  expect(rings.some(r => String((r.props as { alt?: string } | undefined)?.alt).startsWith('SEVİYE'))).toBe(true)
+  expect(await ui.find({ text: /░/ })).toBeUndefined()
+  await ui.unmount()
+})

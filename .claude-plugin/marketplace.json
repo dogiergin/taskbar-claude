@@ -10,7 +10,7 @@
       "name": "taskbar-claude",
       "source": "./",
       "description": "Unofficial community plugin. Claude battles bugs above the prompt while it works: a smooth animated arena, levels and weapons, with live context, limit and plan readouts.",
-      "version": "1.0.3"
+      "version": "1.0.4"
     }
   ]
 }

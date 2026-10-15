@@ -36,6 +36,7 @@ const T = {
     spend_limit: 'Harcama',
     perHour: '/sa',
     lv: 'Sv',
+    renewed: 'yenilendi',
     mode: 'Mod',
     melee: 'Yakın',
     ranged: 'Uzak',
@@ -67,6 +68,7 @@ const T = {
     spend_limit: 'Spend',
     perHour: '/h',
     lv: 'Lv',
+    renewed: 'renewed',
     mode: 'Style',
     melee: 'Melee',
     ranged: 'Ranged',
@@ -92,6 +94,7 @@ const COLS = {
     planFromLimits: 'limitlerden düşer',
     apiWorth: (x: string) => `API ≈ ${x} (ödenmez)`,
     usedPct: (p: number) => `%${p} kullanıldı`,
+    renewedNote: 'yeni pencere ilk istekte başlar',
     level: 'SEVİYE',
     full: 'dolu',
     used: 'kullanıldı',
@@ -134,6 +137,7 @@ const COLS = {
     planFromLimits: 'usage counts against limits',
     apiWorth: (x: string) => `API ≈ ${x} (not billed)`,
     usedPct: (p: number) => `${p}% used`,
+    renewedNote: 'a new window starts with the next request',
     level: 'LEVEL',
     full: 'full',
     used: 'used',
@@ -198,6 +202,16 @@ function clockAt(iso: string, now: number, t: (typeof T)[Lang]) {
   return at.getTime() - now > 20 * 3_600_000 ? `${t.days[at.getDay()] ?? ''} ${hm}` : hm
 }
 
+/**
+ * A limit window as it stands now. The figures are the last API response's,
+ * so a window whose reset time has passed still reads full until the next
+ * request: past its reset it is counted as renewed, at 0%.
+ */
+function liveLimit(l: Limit, now: number): { pct: number; renewed: boolean } {
+  const renewed = l.resetsAt !== null && Date.parse(l.resetsAt) <= now
+  return { pct: renewed ? 0 : l.pct, renewed }
+}
+
 function until(l: Limit, now: number) {
   if (l.resetsAt === null) return null
   const ms = Date.parse(l.resetsAt) - now
@@ -216,23 +230,6 @@ function ringSvg(fraction: number, color: string, label: string, sub?: string, s
 <text x="40" y="${y}" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="${size < 64 ? (label.length > 3 ? 17 : 22) : label.length > 5 ? 13 : 16}" font-weight="700" fill="${color}">${label}</text>
 ${sub ? `<text x="40" y="54" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="10" font-weight="600" fill="${color}">${sub}</text>` : ''}
 </svg>`
-}
-
-/** A small filled pie: `fraction` of the disc in `color`, the rest a faint track. */
-function pieSvg(fraction: number, color: string, size: number): string {
-  const r = size / 2 - 1
-  const c = size / 2
-  const p = Math.max(0, Math.min(1, fraction))
-  const a = p * Math.PI * 2
-  const x = c + r * Math.sin(a)
-  const y = c - r * Math.cos(a)
-  const wedge =
-    p >= 0.999
-      ? `<circle cx="${c}" cy="${c}" r="${r}" fill="${color}"/>`
-      : p <= 0.001
-        ? ''
-        : `<path d="M${c} ${c} L${c} ${c - r} A ${r} ${r} 0 ${p > 0.5 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z" fill="${color}"/>`
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${c}" cy="${c}" r="${r}" fill="${RING.track}" fill-opacity=".3" stroke="${color}" stroke-width="1"/>${wedge}</svg>`
 }
 
 export type PanelArgs = {
@@ -307,8 +304,10 @@ export function summaryChips(a: PanelArgs): Chip[][] {
   }
   for (const l of m.limits) {
     const ms = until(l, a.now)
+    const live = liveLimit(l, a.now)
     const name = ((t as Record<string, unknown>)[l.kind] as string | undefined) ?? l.kind
-    gauges.push(chip(`usage-open-${l.kind}`, up(name), pct(l.pct, a.lang), pctTheme(l.pct), ms !== null ? `↻ ${span(ms, t)}` : undefined, { fill: l.pct / 100, color: pctRing(l.pct) }))
+    const extra = live.renewed ? `↻ ${t.renewed}` : ms !== null ? `↻ ${span(ms, t)}` : undefined
+    gauges.push(chip(`usage-open-${l.kind}`, up(name), pct(live.pct, a.lang), pctTheme(live.pct), extra, { fill: live.pct / 100, color: pctRing(live.pct) }))
   }
   if (onPlan(a)) {
     gauges.push(chip('usage-open-cost', up(t.plan), t.planValue, 'success'))
@@ -476,11 +475,14 @@ function details(E: Els, a: PanelArgs): RenderElement {
       continue
     }
     const ms = until(l, a.now)
-    const lines: Line[] = [{ text: c.usedPct(l.pct), color: pctTheme(l.pct), bold: true }]
-    if (ms !== null && l.resetsAt !== null) {
+    const live = liveLimit(l, a.now)
+    const lines: Line[] = [{ text: c.usedPct(live.pct), color: pctTheme(live.pct), bold: true }]
+    if (live.renewed) {
+      lines.push({ text: `↻ ${t.renewed}`, color: 'success', bold: true }, { text: c.renewedNote, color: 'subtle' })
+    } else if (ms !== null && l.resetsAt !== null) {
       lines.push({ text: c.inT(span(ms, t)) }, { text: c.at(clockAt(l.resetsAt, a.now, t)), color: 'subtle' })
     }
-    top.push(card(E, a, `col-${kind}`, c[kind], pctTheme(l.pct), { fraction: l.pct / 100, color: pctRing(l.pct), label: pct(l.pct, a.lang), alt: `${c[kind]} ${pct(l.pct, a.lang)}` }, lines, quarter))
+    top.push(card(E, a, `col-${kind}`, c[kind], pctTheme(live.pct), { fraction: live.pct / 100, color: pctRing(live.pct), label: pct(live.pct, a.lang), alt: `${c[kind]} ${pct(live.pct, a.lang)}` }, lines, quarter))
   }
 
   // Cost: what a subscription costs nothing extra for, or the API bill.

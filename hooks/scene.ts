@@ -1,6 +1,6 @@
 import type { ClientModule, ClientSurface, RenderElement } from 'claude-code'
 
-import type { Limit, Phase, SceneProps } from '../types'
+import type { Phase, SceneProps } from '../types'
 
 // ---------------------------------------------------------------- palette
 

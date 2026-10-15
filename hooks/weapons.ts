@@ -11,7 +11,6 @@ const INK = '#1E2230'
 const LIT = '#F4F8FF'
 const SHADE = '#A3B0C4'
 const RIDGE = '#7D8AA0'
-const WOOD = '#7A4A2A'
 const WOOD_DARK = '#4F2F18'
 const GOLD = '#E2B651'
 

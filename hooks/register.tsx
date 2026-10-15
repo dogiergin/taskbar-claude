@@ -1,10 +1,12 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionUsage } from 'claude-code'
+import type { EngineInterface, Register } from 'claude-code'
 
-import type { Combat, Metrics, Phase, Scene, Stage, WeaponChoice, WeaponKind } from '../types'
+import type { Combat, Phase, Scene, Stage, WeaponChoice, WeaponKind } from '../types'
 import { RANK_NAMES, WEAPONS, WEAPON_NAMES, isUnlocked, levelFor, rankFor, unlockedBetween } from './level'
 import { gearTier, isRanged } from './weapons'
 import { detectLang, langFromSetting } from './lang'
+import { addSample, toMetrics } from './metrics'
+import type { CostSample } from './metrics'
 import { GIST_DESCRIPTION, GIST_FILE, machineCount, mergeOwn, othersKills, parseLedger } from './sync'
 import type { Lang } from './lang'
 import { CHIP_ROW_HEIGHT } from './chips'
@@ -54,8 +56,6 @@ const WAKE_MS = 2_300
 // How long the victory scene plays before Claude rests.
 const WIN_MS = 4_600
 const TICK_MS = 500
-// Burn rate is averaged over at least this long, so a fresh session is not wild.
-const MIN_BURN_WINDOW_MS = 10 * 60_000
 
 const SEARCH_TOOLS = /^(Read|Grep|Glob|LS|WebFetch|WebSearch|ToolSearch|NotebookRead)$|^mcp__.*(read|get|list|search|query|fetch)/i
 const CODE_TOOLS = /^(Edit|Write|MultiEdit|NotebookEdit)$/
@@ -71,24 +71,6 @@ function phaseForTool(name: string): Phase {
 function shortTool(name: string): string {
   const parts = name.split('__')
   return (parts[parts.length - 1] ?? name).slice(0, 24)
-}
-
-function toMetrics(usage: SessionUsage, now: number): Metrics {
-  const cost = usage.cost?.usd ?? null
-  const elapsed = Math.max(now - usage.startedAt, MIN_BURN_WINDOW_MS)
-  return {
-    ctxPct: usage.context.percent ?? null,
-    ctxTokens: usage.context.tokens ?? null,
-    ctxWindow: usage.context.window,
-    limits: usage.rateLimits.map(l => ({
-      kind: l.kind,
-      pct: l.percentUsed,
-      resetsAt: l.resetsAt ?? null,
-    })),
-    costUsd: cost,
-    burnPerHour: cost === null ? null : cost / (elapsed / 3_600_000),
-    startedAt: usage.startedAt,
-  }
 }
 
 // Per-load memory; a reload starts these over, which only costs one redraw.
@@ -107,6 +89,8 @@ let turnTier: number | null = null
 let ticker: { cancel: () => void } | null = null
 let syncTimer: { cancel: () => void } | null = null
 let syncing = false
+// The session's cost readings over the last hour, for the burn rate.
+let costSamples: CostSample[] = []
 let syncSetting = false
 let lang: Lang = 'en'
 // A language the plugin's settings pin, which detection then leaves alone.
@@ -361,7 +345,8 @@ async function restoreLang($: EngineInterface) {
 async function refreshMetrics($: EngineInterface) {
   try {
     const [usage, now] = await Promise.all([$.session.usage(), $.clock.now()])
-    const metrics = toMetrics(usage, now)
+    if (usage.cost) costSamples = addSample(costSamples, now, usage.cost.usd)
+    const metrics = toMetrics(usage, now, costSamples)
     await patch($, s => ({ ...s, metrics }))
   } catch {
     // Figures stay as they were.
@@ -465,7 +450,9 @@ export const register: Register = (on, options) => {
   on('session.measure', async ($, e, next) => {
     const usage = await $.session.usage().catch(() => null)
     if (usage !== null) {
-      const metrics = toMetrics({ ...usage, context: e.context, rateLimits: e.rateLimits, cost: e.cost }, await $.clock.now())
+      const now = await $.clock.now()
+      if (e.cost) costSamples = addSample(costSamples, now, e.cost.usd)
+      const metrics = toMetrics({ ...usage, context: e.context, rateLimits: e.rateLimits, cost: e.cost }, now, costSamples)
       await patch($, s => ({ ...s, metrics }))
     }
     return next(e)

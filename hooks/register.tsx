@@ -99,9 +99,6 @@ let pinnedLang: Lang | null = null
 const STORE_KILLS = 'totalKills'
 const STORE_LANG = 'lang'
 const STORE_COMBAT = 'combat'
-// Which surfaces have attached and which asked for the band, with when: a
-// record for finding out where the band can show (the mobile app, say).
-const STORE_SURFACES = 'surfacesSeen'
 // This computer's own count, the other computers' sum as last synced, this
 // computer's id in the shared ledger, the gist's id, and whether to sync.
 const STORE_OWN = 'machineKills'
@@ -326,21 +323,6 @@ async function toggleSync($: EngineInterface) {
   if (on) await syncNow($)
 }
 
-const surfacesNoted = new Set<string>()
-
-/** Notes, once per load, that a surface attached or asked for the band. */
-async function noteSurface($: EngineInterface, what: 'attach' | 'render', surface: string) {
-  const key = `${what}:${surface}`
-  if (surfacesNoted.has(key)) return
-  surfacesNoted.add(key)
-  try {
-    const seen = ((await $.store.get(STORE_SURFACES)) ?? {}) as Record<string, string>
-    await $.store.set(STORE_SURFACES, { ...seen, [key]: new Date().toISOString() })
-  } catch {
-    // Only a record.
-  }
-}
-
 async function setLang($: EngineInterface, next: Lang) {
   lang = next
   if ((await read($, langAtom)) !== next) await update($, langAtom, () => next)
@@ -484,13 +466,7 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  on('session.attach', async ($, e, next) => {
-    await noteSurface($, 'attach', e.surface)
-    return next(e)
-  })
-
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    await noteSurface($, 'render', e.surface)
     // The desktop, VS Code and mobile draw the vector scene; the terminal its pixels.
     if (e.props.hasSurvey) {
       return next(e)

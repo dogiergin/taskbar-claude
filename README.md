@@ -4,7 +4,7 @@
 
 **Claude fights bugs above your prompt while it works.** A smooth animated arena for Claude Code, with levels, 18 weapons, a campfire between turns, and a live readout of your context window, usage limits and plan.
 
-![Claude fighting bugs with a katana: dash, jump chop, slash and spin](docs/katana-fight.gif)
+![Claude slashing bugs](docs/fight.svg)
 
 [Türkçe açıklama aşağıda ↓](#-türkçe)
 
@@ -47,7 +47,7 @@ Needs Claude Code **2.1.287 or later** (mods).
 | | |
 |---|---|
 | ![Guns](docs/ranged.svg) | ![Camp](docs/camp.svg) |
-| ![Victory](docs/victory.svg) | ![Katana spin](docs/katana-spin.gif) |
+| ![Victory](docs/victory.svg) | ![Melee with a katana](docs/melee.svg) |
 
 ## Where it draws
 
@@ -105,8 +105,6 @@ Marketplace'i eklemek için `y`, sonra **user** kapsamını seçin (Enter). Bant
 Claude Code **2.1.287 veya üstü** gerekir.
 
 ### Neden kullanmalı
-
-![Claude katanayla böceklerle savaşıyor](docs/katana-fight.gif)
 
 Claude Code çalışırken ne kadar harcadığınızı pek göstermez. Task Bar Claude hepsini prompt'un üstünde, tek tıkla gösterir:
 

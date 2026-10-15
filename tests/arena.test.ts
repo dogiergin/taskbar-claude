@@ -78,13 +78,28 @@ test('the arena rests when Claude is idle', TR, async $ => {
   await ui.unmount()
 })
 
-test('mobile is left to the engine', TR, async ($, on) => {
-  on('ui.render', ($, e) => {
-    const { Text } = $.ui.resolve(e)
-    return Text({ children: 'engine band' })
-  })
-  const ui = await $.ui.mount({ ...band(true), surface: 'mobile' })
-  expect(await ui.find({ text: 'engine band' })).toBeDefined()
+test('mobile gets the scene and button chips, two to a row', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 40, 50), surface: 'mobile' })
+  expect(await arena(ui)).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'usage-open-more' })).toBeDefined()
+  // The state chip only shows.
+  expect(await ui.find({ type: 'Button', key: 'usage-state' })).toBeUndefined()
+  await ui.press({ key: 'usage-mode' })
+  expect(await ui.find({ text: /Uzak/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('mobile picks weapons with buttons, having no drop-down', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 60, 50), surface: 'mobile' })
+  await ui.press({ key: 'usage-open-more' })
+  expect(await ui.find({ text: /SEVİYE/ })).toBeDefined()
+  expect(await ui.find({ type: 'Select' })).toBeUndefined()
+  // Ranged after the style switch above is not carried here: a fresh mount.
+  await ui.press({ key: 'wpn-katana' })
+  expect(await ui.find({ key: 'wpn-katana', text: /● Katana/ })).toBeDefined()
+  await ui.press({ key: 'wpn-auto' })
+  await ui.press({ key: 'usage-close' })
+  expect(await ui.find({ type: 'Button', key: 'usage-open-more' })).toBeDefined()
   await ui.unmount()
 })
 

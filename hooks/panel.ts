@@ -4,14 +4,17 @@
 // Text takes its colors from the person's theme (success, warning, error,
 // subtle...), so it keeps its contrast in a light theme and a dark one alike.
 
-import type { ElementConstructor, ElementTable, RenderElement, SvgProps, ThemeKey } from 'claude-code'
+import type { ElementConstructor, ElementTable, RenderElement, SelectProps, SvgProps, ThemeKey } from 'claude-code'
 
 import type { Limit, Scene, WeaponChoice } from '../types'
 import type { Chip } from './chips'
 import { RANK_NAMES, WEAPONS, WEAPON_NAMES, isUnlocked, levelProgress, rankFor } from './level'
 
 type Lang = 'tr' | 'en'
-type Els = Pick<ElementTable<'terminal' | 'desktop' | 'vscode'>, 'Box' | 'Text' | 'Button' | 'Select'>
+type Els = Pick<ElementTable<'terminal' | 'desktop' | 'vscode' | 'mobile'>, 'Box' | 'Text' | 'Button'> & {
+  /** The drop-down; absent on mobile, which picks with buttons. */
+  Select?: ElementConstructor<SelectProps>
+}
 
 // Ring charts are images, outside the theme: mid tones that read on both.
 const RING = { ok: '#2EA043', warn: '#C69026', bad: '#E5534B', claude: '#D97757', track: '#8B949E' }
@@ -330,6 +333,7 @@ export function chipButtons(E: Els, a: PanelArgs): RenderElement {
     Box({
       key: `usage-row-${r}`,
       flexDirection: 'row',
+      flexWrap: 'wrap',
       columnGap: 1,
       children: row.map(c => {
         const parts: RenderElement[] = []
@@ -345,7 +349,7 @@ export function chipButtons(E: Els, a: PanelArgs): RenderElement {
           borderColor: c.tone,
           ...(press ? { hover: { borderColor: 'claude' } } : {}),
           paddingX: 1,
-          width: '25%',
+          width: a.width < 70 ? '48%' : '25%',
           flexGrow: 1,
           flexShrink: 1,
           minWidth: 0,
@@ -450,8 +454,10 @@ function details(E: Els, a: PanelArgs): RenderElement {
   const c = COLS[a.lang]
   const m = a.s.metrics
   const top: RenderElement[] = []
-  const quarter = '25%'
-  const half = '50%'
+  // A narrow band (a phone) puts two cards to a row, and each a row of its own beneath.
+  const narrow = a.width < 70
+  const quarter = narrow ? '50%' : '25%'
+  const half = narrow ? '100%' : '50%'
 
   // Context.
   if (m.ctxPct !== null && m.ctxTokens !== null && m.ctxWindow > 0) {
@@ -530,15 +536,30 @@ function details(E: Els, a: PanelArgs): RenderElement {
       flexGrow: 1,
       columnGap: 2,
       children: [
-        E.Select({
-          key: 'wpn-select',
-          options,
-          value: picked,
-          onSelect: value => {
-            const choice = options.find(o => o.value === value)?.value
-            if (choice !== undefined) a.onPick(choice as WeaponChoice)
-          },
-        }),
+        E.Select
+          ? E.Select({
+              key: 'wpn-select',
+              options,
+              value: picked,
+              onSelect: value => {
+                const choice = options.find(o => o.value === value)?.value
+                if (choice !== undefined) a.onPick(choice as WeaponChoice)
+              },
+            })
+          : Box({
+              key: 'wpn-buttons',
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              columnGap: 1,
+              children: options.map(o =>
+                Button({
+                  key: `wpn-${o.value}`,
+                  label: o.value === picked ? `● ${o.label}` : o.label,
+                  variant: o.value === picked ? 'primary' : 'secondary',
+                  onPress: () => a.onPick(o.value as WeaponChoice),
+                }),
+              ),
+            }),
         // Wide padding makes the main action a bigger target; the text cannot grow.
         Button({ key: 'usage-close', label: `   ${t.backToBattle}   `, variant: 'primary', onPress: a.onToggle }),
       ],
@@ -555,8 +576,8 @@ function details(E: Els, a: PanelArgs): RenderElement {
     key: 'usage',
     flexDirection: 'column',
     children: [
-      Box({ key: 'row-figures', flexDirection: 'row', columnGap: 1, children: top }),
-      Box({ key: 'row-progress', flexDirection: 'row', columnGap: 1, children: bottom }),
+      Box({ key: 'row-figures', flexDirection: 'row', flexWrap: 'wrap', columnGap: 1, children: top }),
+      Box({ key: 'row-progress', flexDirection: 'row', flexWrap: 'wrap', columnGap: 1, children: bottom }),
     ],
   })
 }

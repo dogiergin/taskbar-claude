@@ -56,7 +56,8 @@ Needs Claude Code **2.1.287 or later** (mods).
 | Desktop app (Code tab) | Smooth vector scene | Click anywhere in a chip | Ring charts, weapon menu |
 | VS Code | Smooth vector scene | Buttons | Ring charts, weapon menu |
 | Terminal | Pixel scene | Buttons (`ctrl+x tab`, digit hotkeys) | Bars, weapon menu |
-| Mobile, `claude -p` | Nothing drawn; counting goes on | | |
+| Mobile | Smooth vector scene | Buttons, two to a row | Ring charts, weapon buttons |
+| `claude -p`, SDK | Nothing drawn; counting goes on | | |
 
 ## Kill count across computers (optional)
 

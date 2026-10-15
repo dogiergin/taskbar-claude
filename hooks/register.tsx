@@ -467,16 +467,15 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    // The desktop and VS Code draw the vector scene; the terminal its pixels.
-    // Mobile is left to the engine.
-    if (e.props.hasSurvey || (e.surface !== 'terminal' && e.surface !== 'desktop' && e.surface !== 'vscode')) {
+    // The desktop, VS Code and mobile draw the vector scene; the terminal its pixels.
+    if (e.props.hasSurvey) {
       return next(e)
     }
 
     const s = await read($, scene)
     const isOpen = await read($, expanded)
     const lang = pinnedLang ?? (await read($, langAtom))
-    const vector = e.surface === 'desktop' || e.surface === 'vscode'
+    const vector = e.surface === 'desktop' || e.surface === 'vscode' || e.surface === 'mobile'
     // The eat scene opens the bar where Claude reaches up to it: the vector scene.
     const isPeeking = vector && (await read($, peek))
     await read($, clock)
@@ -531,12 +530,16 @@ export const register: Register = (on, options) => {
       },
     }
 
-    if (e.surface === 'desktop' || e.surface === 'vscode') {
+    if (e.surface === 'desktop' || e.surface === 'vscode' || e.surface === 'mobile') {
       const { Box, Svg } = $.ui.resolve(e)
       // Closed on the desktop, the summary is one drawn region whose chips
-      // take a click anywhere inside their borders; VS Code draws no such
-      // region, so there the chips are buttons. Open, the panel of cards.
-      let usage = opens ? usageBlock(ui, args) : chipButtons(ui, args)
+      // take a click anywhere inside their borders; VS Code and mobile draw no
+      // such region, so there the chips are buttons. Open, the panel of cards.
+      // The engine fills a table's missing elements with empty stand-ins, so
+      // mobile has a Select that draws nothing: take it away, and the panel
+      // picks weapons with buttons there.
+      const els = e.surface === 'mobile' ? { ...ui, Select: undefined } : ui
+      let usage = opens ? usageBlock(els, args) : chipButtons(els, args)
       if (!opens && e.surface === 'desktop') {
         const { Client } = $.ui.resolve(e)
         usage = <Client key="chips" module="./chips.ts" width={cols} props={{ rows: summaryChips(args), cols }} />

@@ -47,7 +47,7 @@ Needs Claude Code **2.1.287 or later** (mods).
 | | |
 |---|---|
 | ![Guns](docs/ranged.svg) | ![Camp](docs/camp.svg) |
-| ![Victory](docs/victory.svg) | |
+| ![Victory](docs/victory.svg) | ![Katana spin](docs/spin.svg) |
 
 ## Where it draws
 

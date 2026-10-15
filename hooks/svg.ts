@@ -43,8 +43,8 @@ const CONFETTI = ['#F07B86', '#F2C94C', '#6CCB7A', '#5FB4F5', '#C792EA', '#FFB38
 
 // ---------------------------------------------------------------- the script
 
-type BugKind = 'beetle' | 'spider' | 'mantis' | 'wasp'
-type Move = 'slash' | 'jump' | 'spin' | 'dash'
+export type BugKind = 'beetle' | 'spider' | 'mantis' | 'wasp'
+export type Move = 'slash' | 'jump' | 'spin' | 'dash'
 type Hit = { t: number; bug: BugKind; move: Move }
 
 const MOVES_FOR: Record<BugKind, readonly Move[]> = {
@@ -88,6 +88,9 @@ const SCRIPT = script()
 
 /** Loop seconds at which a bug falls: what the hooks count kills by. */
 export const KILL_TIMES: readonly number[] = SCRIPT.map(h => h.t)
+
+/** Each strike of the loop: when it lands and how. */
+export const STRIKES: ReadonlyArray<{ t: number; move: Move; bug: BugKind }> = SCRIPT.map(h => ({ t: h.t, move: h.move, bug: h.bug }))
 
 // ---------------------------------------------------------------- keyframes
 

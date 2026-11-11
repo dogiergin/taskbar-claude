@@ -14,6 +14,7 @@ import { chipButtons, panelRows, summaryChips, usageBlock } from './panel'
 import type { PanelArgs } from './panel'
 import { KILL_TIMES, LOOP_S, PEEK_WINDOW, SVG_HEIGHT, arenaSvg } from './svg'
 import { themeFor } from './winter'
+import { LATEST_URL, shouldTell, updateNotice, versionIn } from './update'
 
 const INITIAL: Scene = {
   phase: 'idle',
@@ -97,6 +98,8 @@ let syncSetting = false
 let lang: Lang = 'en'
 // The theme setting: auto, winter or classic; a pick in the panel wins.
 let themeOption: ThemeChoice = 'auto'
+// Whether to look on GitHub for a newer version at session start.
+let updateCheck = true
 
 // A language the plugin's settings pin, which detection then leaves alone.
 let pinnedLang: Lang | null = null
@@ -105,6 +108,8 @@ const STORE_KILLS = 'totalKills'
 const STORE_LANG = 'lang'
 const STORE_COMBAT = 'combat'
 const STORE_THEME = 'theme'
+// The newer version last told about, and when.
+const STORE_UPDATE_TOLD = 'updateTold'
 // This computer's own count, the other computers' sum as last synced, this
 // computer's id in the shared ledger, the gist's id, and whether to sync.
 const STORE_OWN = 'machineKills'
@@ -235,6 +240,27 @@ async function toggleCombat($: EngineInterface) {
 async function pickTheme($: EngineInterface, theme: ThemeChoice) {
   await patch($, x => ({ ...x, theme }))
   await $.store.set(STORE_THEME, theme)
+}
+
+/**
+ * Looks at the newest published manifest and, when it names a newer version,
+ * says so in a toast: once per new version, again a day later if still not
+ * updated. Offline or blocked, it says nothing.
+ */
+async function checkForUpdate($: EngineInterface) {
+  const r = await $.http.fetch(LATEST_URL)
+  if (!r.ok) return
+  const latest = versionIn(r.text)
+  if (latest === null) return
+  const kept = await $.store.get(STORE_UPDATE_TOLD)
+  const told =
+    kept !== null && typeof kept === 'object' && typeof (kept as { version?: unknown }).version === 'string' && typeof (kept as { at?: unknown }).at === 'number'
+      ? (kept as { version: string; at: number })
+      : null
+  const now = await $.clock.now()
+  if (!shouldTell(latest, told, now)) return
+  await $.store.set(STORE_UPDATE_TOLD, { version: latest, at: now })
+  $.ui.toast(updateNotice(latest, lang))
 }
 
 // Brings back what earlier sessions kept: the kill total, weapon and style.
@@ -372,6 +398,7 @@ export const register: Register = (on, options) => {
   pinnedLang = options.language === 'en' || options.language === 'tr' ? options.language : null
   syncSetting = options.sync === 'on'
   themeOption = THEMES.find(t => t === options.theme) ?? 'auto'
+  updateCheck = options.updateCheck !== 'off'
   if (pinnedLang !== null) lang = pinnedLang
 
   on('session.start', async ($, e, next) => {
@@ -394,6 +421,7 @@ export const register: Register = (on, options) => {
     syncTimer = $.clock.every(SYNC_EVERY_MS, () => {
       syncNow($).catch(() => undefined)
     })
+    if (updateCheck) checkForUpdate($).catch(() => undefined)
     return next(e)
   })
 

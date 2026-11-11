@@ -32,6 +32,15 @@ Answer `y` to add the marketplace, then pick the **user** scope (Enter). The ban
 
 Needs Claude Code **2.1.287 or later** (mods).
 
+### Updates
+
+Plugins from a marketplace like this one do not update on their own unless you turn that on. Either:
+
+- **Automatic:** run `/plugin`, open the **Marketplaces** tab, pick `taskbar-claude` and choose **Enable auto-update**. New versions then arrive in the background; the next session loads them.
+- **By hand:** `/plugin` → **Installed** → `taskbar-claude` → **Update now**, or in a shell `claude plugin update taskbar-claude@taskbar-claude`.
+
+Either way, the band tells you with a toast when a newer version is out (turn that off with the `updateCheck` option).
+
 ## What you get
 
 - **A fight that never restarts.** From the moment you send a prompt until Claude is done, the scene plays as one continuous, smooth loop: bugs come at irregular times and Claude meets each with the strike that suits it: slash, jump chop, spin or dash thrust.
@@ -80,10 +89,11 @@ To share it **between computers**, open the details and press **↻ PC sync** on
 | `language` | `auto`, `tr`, `en` | `auto` |
 | `theme` | `auto` (winter Nov–Feb), `winter`, `classic` | `auto` |
 | `sync` | `off`, `on` | `off` |
+| `updateCheck` | `on`, `off` | `on` |
 
 ## Safety
 
-Like every Claude Code mod, this one runs with your permissions. It draws, counts and keeps its own small store. It runs one program, `gh`, and only when you turn sync on. Read the code in `hooks/`, or check what it uses with:
+Like every Claude Code mod, this one runs with your permissions. It draws, counts and keeps its own small store. It runs one program, `gh`, and only when you turn sync on. Once a session it reads this repository's `plugin.json` from GitHub to see whether a newer version is out, sending nothing about you (`updateCheck: off` stops it). Read the code in `hooks/`, or check what it uses with:
 
 ```
 claude plugin validate <folder>
@@ -113,6 +123,15 @@ Bir Claude Code **terminal** oturumunda:
 Marketplace'i eklemek için `y`, sonra **user** kapsamını seçin (Enter). Bant hemen ve sonraki tüm oturumlarda görünür: terminal, masaüstü uygulamasının Code sekmesi ve VS Code.
 
 Claude Code **2.1.287 veya üstü** gerekir.
+
+### Güncellemeler
+
+Bu tür marketplace eklentileri, siz açmadıkça kendiliğinden güncellenmez:
+
+- **Otomatik:** `/plugin` → **Marketplaces** sekmesi → `taskbar-claude` → **Enable auto-update**. Yeni sürümler arka planda iner, sonraki oturum yükler.
+- **Elle:** `/plugin` → **Installed** → `taskbar-claude` → **Update now** ya da terminalde `claude plugin update taskbar-claude@taskbar-claude`.
+
+Yeni bir sürüm çıktığında bant bir bildirimle haber verir (`updateCheck` ayarıyla kapatılabilir).
 
 ### Neden kullanmalı
 

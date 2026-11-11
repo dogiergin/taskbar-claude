@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'claude-code/testing'
+import { REMIND_MS, VERSION, isNewer, shouldTell, updateNotice, versionIn } from '../hooks/update'
 
 import { mergeOwn, othersKills, parseLedger } from '../hooks/sync'
 import type { Ledger } from '../hooks/sync'
@@ -103,5 +104,35 @@ describe('kill counts across computers', () => {
     expect(b.total).toBe(5_000)
     b.sync(gist)
     expect(b.total).toBe(7_500)
+  })
+})
+
+describe('telling about a new version', () => {
+  test('versions compare part by part', () => {
+    expect(isNewer('1.0.10', '1.0.9')).toBe(true)
+    expect(isNewer('1.1', '1.0.9')).toBe(true)
+    expect(isNewer('1.0.8', '1.0.8')).toBe(false)
+    expect(isNewer('1.0.7', '1.0.8')).toBe(false)
+  })
+
+  test('a manifest names its version, or nothing usable', () => {
+    expect(versionIn('{"name":"taskbar-claude","version":"2.3.4"}')).toBe('2.3.4')
+    expect(versionIn('{"version":"latest"}')).toBe(null)
+    expect(versionIn('<html>rate limited</html>')).toBe(null)
+  })
+
+  test('news is told once, again a day later, never for the same or an older version', () => {
+    const now = 1_800_000_000_000
+    expect(shouldTell('9.9.9', null, now)).toBe(true)
+    expect(shouldTell('9.9.9', { version: '9.9.9', at: now - 60_000 }, now)).toBe(false)
+    expect(shouldTell('9.9.9', { version: '9.9.9', at: now - REMIND_MS }, now)).toBe(true)
+    expect(shouldTell('9.9.10', { version: '9.9.9', at: now - 60_000 }, now)).toBe(true)
+    expect(shouldTell(VERSION, null, now)).toBe(false)
+  })
+
+  test('the notice says the new and the current version and how to update', () => {
+    const tr = updateNotice('9.9.9', 'tr')
+    expect(tr.includes('9.9.9') && tr.includes(VERSION) && tr.includes('Update now')).toBe(true)
+    expect(updateNotice('9.9.9', 'en').includes('is out')).toBe(true)
   })
 })

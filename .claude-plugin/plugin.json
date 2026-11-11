@@ -1,6 +1,6 @@
 {
   "name": "taskbar-claude",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Unofficial community plugin. Claude battles bugs above the prompt while it works: a smooth animated arena, levels and weapons, with live context, limit and plan readouts.",
   "author": {
     "name": "edogukanergin",
@@ -29,6 +29,16 @@
         "classic"
       ],
       "default": "auto"
+    },
+    "updateCheck": {
+      "type": "string",
+      "title": "New version notice",
+      "description": "on looks at the plugin's GitHub page once a session and tells you when a newer version is out; off never looks.",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
     },
     "sync": {
       "type": "string",

@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { Combat, Phase, Scene, Stage, WeaponChoice, WeaponKind } from '../types'
+import type { Combat, Phase, Scene, Stage, ThemeChoice, WeaponChoice, WeaponKind } from '../types'
 import { RANK_NAMES, WEAPONS, WEAPON_NAMES, isUnlocked, levelFor, rankFor, unlockedBetween } from './level'
 import { gearTier, isRanged } from './weapons'
 import { detectLang, langFromSetting } from './lang'
@@ -13,6 +13,7 @@ import { CHIP_ROW_HEIGHT } from './chips'
 import { chipButtons, panelRows, summaryChips, usageBlock } from './panel'
 import type { PanelArgs } from './panel'
 import { KILL_TIMES, LOOP_S, PEEK_WINDOW, SVG_HEIGHT, arenaSvg } from './svg'
+import { themeFor } from './winter'
 
 const INITIAL: Scene = {
   phase: 'idle',
@@ -24,6 +25,7 @@ const INITIAL: Scene = {
   totalKills: 0,
   weapon: 'auto',
   combat: 'melee',
+  theme: 'auto',
   awake: false,
   sync: { on: false, machines: 1, at: null, error: null },
   metrics: {
@@ -93,12 +95,16 @@ let syncing = false
 let costSamples: CostSample[] = []
 let syncSetting = false
 let lang: Lang = 'en'
+// The theme setting: auto, winter or classic; a pick in the panel wins.
+let themeOption: ThemeChoice = 'auto'
+
 // A language the plugin's settings pin, which detection then leaves alone.
 let pinnedLang: Lang | null = null
 
 const STORE_KILLS = 'totalKills'
 const STORE_LANG = 'lang'
 const STORE_COMBAT = 'combat'
+const STORE_THEME = 'theme'
 // This computer's own count, the other computers' sum as last synced, this
 // computer's id in the shared ledger, the gist's id, and whether to sync.
 const STORE_OWN = 'machineKills'
@@ -113,6 +119,7 @@ const STORE_SYNC_OPTED = 'syncOptedIn'
 const SYNC_EVERY_MS = 5 * 60_000
 const STORE_WEAPON = 'weapon'
 const CHOICES: readonly WeaponChoice[] = ['auto', ...WEAPONS.map(w => w.kind)]
+const THEMES: readonly ThemeChoice[] = ['auto', 'winter', 'classic']
 
 // Writes go through here so a failure never reaches Claude's own work.
 async function patch($: EngineInterface, fn: (s: Scene) => Scene) {
@@ -224,19 +231,27 @@ async function toggleCombat($: EngineInterface) {
   if (fighting) turnWeapons = weaponsFor(await read($, scene))
 }
 
+/** The scenery the person picked in the panel, kept for later sessions. */
+async function pickTheme($: EngineInterface, theme: ThemeChoice) {
+  await patch($, x => ({ ...x, theme }))
+  await $.store.set(STORE_THEME, theme)
+}
+
 // Brings back what earlier sessions kept: the kill total, weapon and style.
 async function restore($: EngineInterface) {
   try {
-    const [kills, weapon, style, ownKept, othersKept, syncOn] = await Promise.all([
+    const [kills, weapon, style, ownKept, othersKept, syncOn, themeKept] = await Promise.all([
       $.store.get(STORE_KILLS),
       $.store.get(STORE_WEAPON),
       $.store.get(STORE_COMBAT),
       $.store.get(STORE_OWN),
       $.store.get(STORE_OTHERS),
       $.store.get(STORE_SYNC),
+      $.store.get(STORE_THEME),
     ])
     const combat: Combat = style === 'ranged' ? 'ranged' : 'melee'
     const choice = CHOICES.find(c => c === weapon) ?? 'auto'
+    const theme = THEMES.find(t => t === themeKept) ?? themeOption
     // Before computers were told apart, the kept total was all this one's.
     const legacy = typeof kills === 'number' && kills >= 0 ? kills : 0
     const others = typeof othersKept === 'number' && othersKept >= 0 ? othersKept : 0
@@ -245,7 +260,7 @@ async function restore($: EngineInterface) {
     const own = Math.max(typeof ownKept === 'number' && ownKept >= 0 ? ownKept : legacy, soFar)
     if (own !== ownKept) await $.store.set(STORE_OWN, own)
     const on = syncOn === true
-    await patch($, x => ({ ...x, totalKills: own + others, weapon: choice, combat, sync: { ...x.sync, on } }))
+    await patch($, x => ({ ...x, totalKills: own + others, weapon: choice, combat, theme, sync: { ...x.sync, on } }))
   } catch {
     // A fresh start.
   }
@@ -356,6 +371,7 @@ async function refreshMetrics($: EngineInterface) {
 export const register: Register = (on, options) => {
   pinnedLang = options.language === 'en' || options.language === 'tr' ? options.language : null
   syncSetting = options.sync === 'on'
+  themeOption = THEMES.find(t => t === options.theme) ?? 'auto'
   if (pinnedLang !== null) lang = pinnedLang
 
   on('session.start', async ($, e, next) => {
@@ -528,6 +544,9 @@ export const register: Register = (on, options) => {
       onSync: () => {
         toggleSync($).catch(() => undefined)
       },
+      onTheme: theme => {
+        pickTheme($, theme).catch(() => undefined)
+      },
     }
 
     if (e.surface === 'desktop' || e.surface === 'vscode' || e.surface === 'mobile') {
@@ -558,7 +577,7 @@ export const register: Register = (on, options) => {
         <Box flexDirection="column">
           {usage}
           <Svg
-            source={arenaSvg(mode, width, turnWeapons ?? weaponsFor(s), turnTier ?? gearTier(levelFor(s.totalKills)))}
+            source={arenaSvg(mode, width, turnWeapons ?? weaponsFor(s), turnTier ?? gearTier(levelFor(s.totalKills)), themeFor(s.theme, new Date()))}
             alt="Claude fights bugs while it works"
             {...(fitsBand ? {} : { width, height: SVG_HEIGHT })}
             isInteractive

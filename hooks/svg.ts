@@ -8,12 +8,15 @@
 // markup never changes mid-turn and the animation never starts over.
 
 import type { WeaponKind } from '../types'
+import { GROUND, SVG_HEIGHT, f, f3, seeded } from './geometry'
+import { SANTA_HAT, SLEEP_HAT, WINTER_CSS, WINTER_DEFS, campSnow, sleigh, winterBackdrop, winterCampBackdrop } from './winter'
+import type { Theme } from './winter'
 import { GEAR_CSS, GUN_SCALE, MUZZLE, TRACER, WEAPON_CSS, WEAPON_DEFS, gear, isRanged, weapon } from './weapons'
 
 /** fight and win while Claude works; sleep, wake and camp between turns. */
 export type SvgMode = 'sleep' | 'wake' | 'camp' | 'fight' | 'win'
 
-export const SVG_HEIGHT = 136
+export { SVG_HEIGHT }
 
 /** The fight loop's length, in seconds. */
 export const LOOP_S = 48
@@ -23,21 +26,9 @@ export const EAT_LEN = 4.6
 /** The part of the snack break the usage bar stays open for, in loop seconds. */
 export const PEEK_WINDOW = { open: EAT_AT + 0.75, close: EAT_AT + 3.9 }
 
-const GROUND = 120
 const HERO_X = 150
 const REACH = HERO_X + 78
 
-const f = (n: number) => Number(n.toFixed(2))
-const f3 = (n: number) => Number(n.toFixed(3))
-
-// A fixed sequence, so the same inputs draw the same markup.
-function seeded(seed: number) {
-  let s = seed
-  return () => {
-    s = (s * 16807) % 2147483647
-    return (s - 1) / 2147483646
-  }
-}
 
 const CONFETTI = ['#F07B86', '#F2C94C', '#6CCB7A', '#5FB4F5', '#C792EA', '#FFB38A']
 
@@ -190,8 +181,8 @@ function backdrop(w: number): string {
   const near = skyline(w, 23, '#0F1430', 18, 46, 0.1)
   return `<rect x="-10" y="-10" width="${w + 20}" height="${SVG_HEIGHT + 20}" fill="url(#sky)"/>
 ${bokeh}${dust}
-<g class="far"><g id="tile-far">${far}</g><use href="#tile-far" x="${w}"/></g>
-<g class="near"><g id="tile-near">${near}</g><use href="#tile-near" x="${w}"/></g>
+<g class="far"><g id="tile-far">${far}</g><use href="#tile-far" x="${w}"/><use href="#tile-far" x="${2 * w}"/></g>
+<g class="near"><g id="tile-near">${near}</g><use href="#tile-near" x="${w}"/><use href="#tile-near" x="${2 * w}"/></g>
 <rect x="-10" y="${GROUND}" width="${w + 20}" height="${SVG_HEIGHT - GROUND + 10}" fill="#0C1026"/>
 <line x1="0" y1="${GROUND + 0.5}" x2="${w}" y2="${GROUND + 0.5}" stroke="#3A4380" stroke-width="1"/>
 <line class="dash" x1="0" y1="${GROUND + 7}" x2="${w}" y2="${GROUND + 7}" stroke="#262E60" stroke-width="2" stroke-dasharray="14 22"/>`
@@ -211,8 +202,11 @@ const BATTLE_FACE = `<path d="M-16 -52 L-5 -48 L-5 -45.5 L-16 -49.5 Z" fill="#1B
 <path d="M-6.5 -25.5 h13 M-3.5 -28.2 v5.4 M0 -28.2 v5.4 M3.5 -28.2 v5.4" stroke="#F4EDE0" stroke-width="1.1"/>`
 const HAPPY_FACE = `<path d="M-7 -28 Q 0 -21 7 -28" stroke="#1B1210" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
 
-function hero(weapons: readonly WeaponKind[], mode: SvgMode, tier = 0): string {
-  const g = gear(tier)
+function hero(weapons: readonly WeaponKind[], mode: SvgMode, tier = 0, theme: Theme = 'classic'): string {
+  const worn = gear(tier)
+  // In winter the Santa hat takes the place of the headgear (and the
+  // headband's tails); the cape, shield and aura stay.
+  const g = theme === 'winter' ? { ...worn, back: tier >= 2 ? worn.back : '', front: SANTA_HAT } : worn
   const legs = mode === 'fight' || mode === 'win' ? 'leg' : ''
   const faces =
     mode === 'fight'
@@ -496,7 +490,21 @@ function fightLayer(weapons: readonly WeaponKind[], w: number, ranged: boolean):
       const kind = TRACER[gun] ?? 'single'
       const seg = (dy: number, cls: string, color: string, width: number, dash: string) =>
         `<line class="${cls}" x1="${f(mx)}" y1="${f(my + dy)}" x2="${f(tx)}" y2="${f(ty + dy)}" stroke="${color}" stroke-width="${width}" stroke-linecap="round" stroke-dasharray="${dash}"/>`
-      if (kind === 'beam') {
+      if (kind === 'arrow') {
+        // A real arrow, flying from the string to the bug.
+        const deg = (aim * 180) / Math.PI
+        svg += `<g transform="translate(${f(mx)} ${f(my)}) rotate(${f(deg)})"><g class="sh s${k}"><path d="M-16 0 H6" stroke="#7A4A2A" stroke-width="2.2"/><path d="M6 -3.6 L13 0 L6 3.6 Z" fill="#DDE3EE" stroke="#1E2230" stroke-width=".6"/><path d="M-16 0 l-5 -4 M-13 0 l-5 -4 M-16 0 l-5 4 M-13 0 l-5 4" stroke="#F07B86" stroke-width="1.8"/></g></g>`
+        const end = `transform:translateX(${f(Math.max(0, len - 12))}px)`
+        css += `.s${k}{animation:s${k} ${L} linear infinite}` + keyframes(`s${k}`, [[h.t - 0.2 - 0.001, `${off};transform:translateX(0)`], [h.t - 0.2, 'opacity:1;transform:translateX(0)'], [h.t, `opacity:1;${end}`], [h.t + 0.01, `${off};${end}`]], `${off};transform:translateX(0)`)
+      } else if (kind === 'spread') {
+        // Buckshot: three short pellets fanning out toward the bug.
+        const fan = [-9, 0, 9]
+          .map(d => `<line x1="${f(mx)}" y1="${f(my)}" x2="${f(tx)}" y2="${f(ty + d)}" stroke="#FFB347" stroke-width="2" stroke-linecap="round" stroke-dasharray="10 ${f(len + 40)}"/>`)
+          .join('')
+        svg += `<g class="sh s${k}">${fan}</g>`
+        const go = `stroke-dashoffset:${f(-(len - 10))}`
+        css += `.s${k}{animation:s${k} ${L} linear infinite}` + keyframes(`s${k}`, [[h.t - 0.081, `${off};stroke-dashoffset:0`], [h.t - 0.08, 'opacity:1;stroke-dashoffset:0'], [h.t, `opacity:1;${go}`], [h.t + 0.01, `${off};${go}`]], `${off};stroke-dashoffset:0`)
+      } else if (kind === 'beam') {
         svg += `<g class="sh s${k}">${seg(0, '', '#7CF7FF', 7, 'none').replace('stroke-width="7"', 'stroke-width="7" opacity=".35"')}${seg(0, '', '#E8FFFF', 2.4, 'none')}</g>`
         css += `.s${k}{animation:s${k} ${L} linear infinite}` + keyframes(`s${k}`, [[h.t - 0.06, off], [h.t - 0.04, 'opacity:1'], [h.t + 0.12, off]], off)
       } else {
@@ -644,8 +652,9 @@ function winLayer(w: number): { svg: string; css: string } {
  * the weapons and the width: a fight drawn at the start of a turn plays on
  * untouched until the turn ends.
  */
-export function arenaSvg(mode: SvgMode, w: number, weapons: readonly WeaponKind[], tier = 0): string {
-  if (mode === 'sleep' || mode === 'wake' || mode === 'camp') return campSvg(mode, w, tier)
+export function arenaSvg(mode: SvgMode, w: number, weapons: readonly WeaponKind[], tier = 0, theme: Theme = 'classic'): string {
+  if (mode === 'sleep' || mode === 'wake' || mode === 'camp') return campSvg(mode, w, tier, theme)
+  const winter = theme === 'winter'
   const held = weapons.length > 0 ? weapons : (['katana'] as const)
   const shown = mode === 'fight' ? held : held.slice(0, 1)
   // A gun in hand makes it a gunfight: the weapons come all of one kind.
@@ -655,11 +664,11 @@ export function arenaSvg(mode: SvgMode, w: number, weapons: readonly WeaponKind[
   const extra = mode === 'fight' && held.length > 1 ? held.slice(1).map(k => `.wk-${k}{opacity:0}`).join('') : ''
   const heroX = mode === 'win' ? HERO_X + 4 : HERO_X
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${SVG_HEIGHT}" viewBox="0 0 ${w} ${SVG_HEIGHT}">
-${defs()}
-<style>${baseCss}${extra}${layer.css}</style>
+${defs()}${winter ? WINTER_DEFS : ''}
+<style>${baseCss}${winter ? WINTER_CSS : ''}${extra}${layer.css}</style>
 <g class="world">
-${backdrop(w)}
-<g transform="translate(${heroX} ${GROUND})">${hero(shown, mode, tier)}</g>
+${winter ? winterBackdrop(w) : backdrop(w)}
+<g transform="translate(${heroX} ${GROUND})">${hero(shown, mode, tier, theme)}</g>
 ${layer.svg}
 </g>
 </svg>`
@@ -822,10 +831,11 @@ function bedroll(x: number): string {
 </g>`
 }
 
-function sleepHead(x: number): string {
+function sleepHead(x: number, winter: boolean): string {
   return `<g transform="translate(${x - 44} ${GROUND - 13})">
   <rect x="-13" y="-16" width="26" height="18" rx="2" fill="url(#front)"/>
   <path d="M-8 -9 h5 M3 -9 h5" stroke="#1B1210" stroke-width="1.6" stroke-linecap="round"/>
+  ${winter ? SLEEP_HAT : ''}
 </g>`
 }
 
@@ -866,26 +876,27 @@ function campCss(): string {
 }
 
 /** Camp: asleep at the start of a session, resting between turns, or waking. */
-function campSvg(mode: 'sleep' | 'camp' | 'wake', w: number, tier: number): string {
+function campSvg(mode: 'sleep' | 'camp' | 'wake', w: number, tier: number, theme: Theme): string {
+  const winter = theme === 'winter'
   const fireX = Math.round(w / 2)
   const heroX = fireX - 96
   const low = mode === 'sleep'
-  let scene = campBackdrop(w) + campfire(fireX, low)
+  let scene = (winter ? winterCampBackdrop(w) + sleigh(w) : campBackdrop(w)) + campfire(fireX, low)
   let css = campCss()
   if (mode === 'camp') {
     // On a log by the fire, toasting a marshmallow; the katana stands by.
     scene += planted(heroX - 52)
     scene += `<rect x="${heroX - 34}" y="${GROUND - 11}" width="74" height="11" rx="5.5" fill="#5A3A22"/><path d="M${heroX - 28} ${GROUND - 6} h60" stroke="#3E2715" stroke-width="1.2"/>`
-    scene += `<g transform="translate(${heroX} ${GROUND - 9})">${hero(['katana'], 'camp', tier)}</g>`
+    scene += `<g transform="translate(${heroX} ${GROUND - 9})">${hero(['katana'], 'camp', tier, theme)}</g>`
     scene += `<g transform="translate(${heroX} ${GROUND - 9})"><path d="M36 -32 L84 -22" stroke="#7A4A2A" stroke-width="2" stroke-linecap="round"/><rect class="mm" x="80" y="-27" width="9" height="8" rx="3" fill="#FFF8EC"/></g>`
     scene += dog(fireX + 66, false) + cat(fireX + 122, false)
   } else if (mode === 'sleep') {
-    scene += planted(heroX - 70) + bedroll(heroX) + sleepHead(heroX) + zzz(heroX - 40, GROUND - 34)
+    scene += planted(heroX - 70) + bedroll(heroX) + sleepHead(heroX, winter) + zzz(heroX - 40, GROUND - 34)
     scene += dog(fireX + 66, true) + cat(fireX + 116, true) + zzz(fireX + 60, GROUND - 24)
   } else {
     // Out of the bag, a stretch, a startled "!", and up with the katana.
     scene += bedroll(heroX)
-    scene += `<g class="rise" style="transform-origin:${heroX}px ${GROUND}px"><g transform="translate(${heroX} ${GROUND})">${hero(['katana'], 'wake', tier)}</g></g>`
+    scene += `<g class="rise" style="transform-origin:${heroX}px ${GROUND}px"><g transform="translate(${heroX} ${GROUND})">${hero(['katana'], 'wake', tier, theme)}</g></g>`
     scene += `<text class="bang" x="${heroX + 2}" y="${GROUND - 74}" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="22" fill="#FFD25A">!</text>`
     scene += `<g class="gone">${planted(heroX - 70)}</g>`
     scene += `<g class="hop">${dog(fireX + 66, false)}</g>` + cat(fireX + 122, false)
@@ -907,8 +918,8 @@ function campSvg(mode: 'sleep' | 'camp' | 'wake', w: number, tier: number): stri
   <radialGradient id="moonGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F4F1DE" stop-opacity=".35"/><stop offset="1" stop-color="#F4F1DE" stop-opacity="0"/></radialGradient>
 </defs>`
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${SVG_HEIGHT}" viewBox="0 0 ${w} ${SVG_HEIGHT}">
-${defs()}${extraDefs}
-<style>${baseStyle(w)}${css}</style>
-${scene}
+${defs()}${extraDefs}${winter ? WINTER_DEFS : ''}
+<style>${baseStyle(w)}${css}${winter ? WINTER_CSS : ''}</style>
+${scene}${winter ? campSnow(w) : ''}
 </svg>`
 }

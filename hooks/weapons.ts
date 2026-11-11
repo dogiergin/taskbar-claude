@@ -173,6 +173,33 @@ ${line('M0 -21 L-1 -40 L1 -58 L0 -80', '#FFFFFF', 1)}
 ${line('M-8 -60 l3 0 M-6.5 -61.5 l0 3 M7 -40 l3 0 M8.5 -41.5 l0 3', '#E8FBFF', 0.8, ' class="twinkle"')}`
 }
 
+// A short haft, a chain, and a spiked iron ball swinging at its end.
+function flail(): string {
+  let spikes = ''
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const c = Math.cos(a)
+    const s = Math.sin(a)
+    const p = (r: number, d: number) => `${(9 + c * r - s * d).toFixed(2)} ${(-74 + s * r + c * d).toFixed(2)}`
+    spikes += fill(`M${p(6, -2.2)} L${p(12.5, 0)} L${p(6, 2.2)} Z`, i < 4 ? SHADE : LIT)
+  }
+  return `${haft(-34, 4.4)}
+<rect x="-3" y="-38" width="6" height="5" rx="1" fill="${SHADE}" stroke="${INK}" stroke-width=".6"/>
+<g class="swing">${line('M0 -38 C 1 -50 4 -58 7 -66', '#6E7A90', 2.6, ' stroke-dasharray="3 1.6"')}
+${spikes}<circle cx="9" cy="-74" r="7.4" fill="url(#steel)" stroke="${INK}" stroke-width=".7"/><circle cx="6.6" cy="-76.6" r="2" fill="#FFFFFF" opacity=".75"/></g>`
+}
+
+// A sword of light: a metal hilt and a glowing blade with a white-hot core.
+function plasma(): string {
+  return `<rect x="-2.8" y="-16" width="5.6" height="20" rx="1.4" fill="#3A3D44" stroke="${INK}" stroke-width=".6"/>
+${line('M-2.8 -12 H2.8 M-2.8 -8 H2.8 M-2.8 -4 H2.8', '#8C99AD', 0.9)}
+<rect x="-3.6" y="-20" width="7.2" height="4.4" rx="1" fill="url(#steel)" stroke="${INK}" stroke-width=".6"/>
+<circle cx="3.4" cy="-10" r="1.1" fill="#C2263A"/>
+<g class="legend" filter="url(#legendGlow)">
+<rect x="-3.6" y="-88" width="7.2" height="68" rx="3.6" fill="#B26CFF" opacity=".55"/>
+<rect x="-1.6" y="-86" width="3.2" height="64" rx="1.6" fill="#F6EDFF"/>
+</g>`
+}
 
 // ---------------------------------------------------------------- firearms
 
@@ -227,8 +254,10 @@ function berettas(): string {
   return `<g transform="translate(-7 7)" opacity=".92">${beretta()}</g>${beretta()}`
 }
 
+// The AKS: its stock folded under the receiver, so nothing reaches back over
+// the hero's face.
 function ak47(): string {
-  return `${fill('M-24 -5 L-6 -8 L-6 -2.4 L-22 3.4 Z', 'url(#woodGrain)')}
+  return `${line('M-7 -3 L-7 -7 M-7 -3.4 H16 M-7 -6.6 L-5 -6.6', '#5E636E', 1.3)}
 <rect x="-6" y="-9.4" width="27" height="6.4" fill="#3A3D44" stroke="${INK}" stroke-width=".6"/>
 ${line('M-5 -8.4 H20', '#5E636E', 0.8)}
 <rect x="21" y="-8.6" width="12" height="4.8" rx="1" fill="url(#woodGrain)" stroke="${INK}" stroke-width=".5"/>
@@ -243,7 +272,7 @@ ${flash(46, -6.5, true)}`
 
 // A minigun: barrels spinning in a cluster, an ammo belt feeding in.
 function minigun(): string {
-  return `<path d="M-6 0 C -10 8 -18 10 -24 6" stroke="#B8892E" stroke-width="4" fill="none" stroke-dasharray="2 1.4"/>
+  return `<path d="M-6 0 C -8 6 -9 10 -7 15" stroke="#B8892E" stroke-width="4" fill="none" stroke-dasharray="2 1.4"/>
 <rect x="-9" y="-13" width="20" height="13" rx="2.4" fill="${GUNMETAL_LIT}" stroke="${INK}" stroke-width=".6"/>
 ${line('M-6 -13 C -4 -19 4 -19 6 -13', GUNMETAL, 2.2)}
 <g class="spin">
@@ -269,11 +298,33 @@ ${fill('M17 -9.6 L33 -8.2 L33 -5.8 L17 -4.4 Z', 'url(#steel)')}
 ${flash(35, -7, true)}`
 }
 
+// A recurve bow held upright, an arrow on the string; the arrow flies at each shot.
+function bow(): string {
+  return `${line('M2 -18 Q 4 -22 8 -24 M2 18 Q 4 22 8 24', '#5A341B', 2.6)}
+${line('M2 -18 Q 13 -9 13 0 Q 13 9 2 18', '#8A5A34', 3)}${line('M3 -16 Q 11 -8 11.4 0', '#C08A55', 0.9)}
+${line('M8 -24 L-1 0 L8 24', '#EDE6D6', 0.8)}
+<rect x="9.4" y="-4" width="5" height="8" rx="1.6" fill="#3A2618" stroke="${INK}" stroke-width=".5"/>
+${line('M-1 0 H22', '#7A4A2A', 1.6)}${fill('M22 -2.6 L27 0 L22 2.6 Z', SHADE)}${line('M1 0 l-2.4 -2.6 M3 0 l-2.4 -2.6 M1 0 l-2.4 2.6 M3 0 l-2.4 2.6', '#F07B86', 1.2)}`
+}
+
+// A pump shotgun with a pistol grip (no stock to cover the face), a wooden pump.
+function shotgun(): string {
+  return `<rect x="-5" y="-10" width="18" height="7" rx="1.2" fill="${GUNMETAL_LIT}" stroke="${INK}" stroke-width=".6"/>
+<rect x="13" y="-10" width="30" height="3.2" fill="${GUNMETAL}" stroke="${INK}" stroke-width=".4"/>
+<rect x="13" y="-6.6" width="24" height="2.6" fill="#3A3D44"/>
+<rect x="20" y="-7.6" width="12" height="5" rx="1.6" fill="url(#woodGrain)" stroke="${INK}" stroke-width=".5"/>
+${line('M22 -7 v4 M25 -7 v4 M28 -7 v4', WOOD_DARK, 0.6)}
+<circle cx="41" cy="-11" r="1" fill="#C9A14A"/>
+${fill('M-3 -3 L3.4 -3 L1.4 8.4 L-5 8.4 Z', 'url(#woodGrain)')}
+${trigger(3.4, -1, GUNMETAL)}
+${flash(44, -8.4, true)}`
+}
+
 /** How much bigger a gun is drawn in the hero's hand than in its own units. */
 export const GUN_SCALE = 1.6
 
 /** The guns. */
-export const RANGED: readonly WeaponKind[] = ['ppk', 'deagle', 'berettas', 'ak47', 'minigun', 'blaster']
+export const RANGED: readonly WeaponKind[] = ['ppk', 'bow', 'deagle', 'berettas', 'ak47', 'shotgun', 'minigun', 'blaster']
 
 export function isRanged(kind: WeaponKind): boolean {
   return RANGED.includes(kind)
@@ -287,10 +338,12 @@ export const MUZZLE: Partial<Record<WeaponKind, { x: number; y: number }>> = {
   ak47: { x: 46, y: -6.5 },
   minigun: { x: 45, y: -7.5 },
   blaster: { x: 35, y: -7 },
+  bow: { x: 22, y: 0 },
+  shotgun: { x: 44, y: -8.4 },
 }
 
 /** A shot's trace: a lone round, a pair, a burst, or a beam. */
-export type Tracer = 'single' | 'double' | 'burst' | 'beam'
+export type Tracer = 'single' | 'double' | 'burst' | 'beam' | 'arrow' | 'spread'
 export const TRACER: Partial<Record<WeaponKind, Tracer>> = {
   ppk: 'single',
   deagle: 'single',
@@ -298,6 +351,8 @@ export const TRACER: Partial<Record<WeaponKind, Tracer>> = {
   ak47: 'burst',
   minigun: 'burst',
   blaster: 'beam',
+  bow: 'arrow',
+  shotgun: 'spread',
 }
 
 /** The drawing of a weapon: a blade pointing up from the hand, a gun forward. */
@@ -321,6 +376,10 @@ export function weapon(kind: WeaponKind): string {
     case 'ak47': return ak47()
     case 'minigun': return minigun()
     case 'blaster': return blaster()
+    case 'flail': return flail()
+    case 'plasma': return plasma()
+    case 'bow': return bow()
+    case 'shotgun': return shotgun()
   }
 }
 
@@ -331,7 +390,9 @@ export const WEAPON_CSS = `
 .twinkle{animation:tw 1.2s ease-in-out infinite}
 .mf{opacity:0}
 .spin{animation:spin .08s linear infinite}
-@keyframes spin{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}`
+@keyframes spin{0%,100%{transform:translateY(0)}50%{transform:translateY(1.2px)}}
+.swing{animation:swing .5s ease-in-out infinite;transform-origin:0 -38px}
+@keyframes swing{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg)}}`
 
 // ---------------------------------------------------------------- late-game gear
 

@@ -30,18 +30,25 @@ export type WeaponKind =
   | 'scythe'
   | 'dragon'
   | 'frost'
+  | 'flail'
+  | 'plasma'
   | 'ppk'
   | 'deagle'
   | 'berettas'
   | 'ak47'
   | 'minigun'
   | 'blaster'
+  | 'bow'
+  | 'shotgun'
 
 /** Close in with a blade, or shoot from afar. */
 export type Combat = 'melee' | 'ranged'
 
 /** The weapon the person picked, or `auto` to follow what Claude is doing. */
 export type WeaponChoice = 'auto' | WeaponKind
+
+/** The scenery: by the season (`auto`), or one kept all year. */
+export type ThemeChoice = 'auto' | 'winter' | 'classic'
 
 /** Where sharing the kill count between computers stands. */
 export type SyncStatus = {
@@ -71,6 +78,7 @@ export type Scene = {
   totalKills: number
   weapon: WeaponChoice
   combat: Combat
+  theme: ThemeChoice
   /** False until the session's first prompt wakes Claude in camp. */
   awake: boolean
   sync: SyncStatus

@@ -1,6 +1,6 @@
 {
   "name": "taskbar-claude",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Unofficial community plugin. Claude battles bugs above the prompt while it works: a smooth animated arena, levels and weapons, with live context, limit and plan readouts.",
   "author": {
     "name": "edogukanergin",
@@ -16,6 +16,17 @@
         "auto",
         "tr",
         "en"
+      ],
+      "default": "auto"
+    },
+    "theme": {
+      "type": "string",
+      "title": "Theme",
+      "description": "auto is the snowy forest from November through February and the city the rest of the year; winter or classic pins one.",
+      "options": [
+        "auto",
+        "winter",
+        "classic"
       ],
       "default": "auto"
     },

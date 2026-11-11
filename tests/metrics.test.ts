@@ -109,6 +109,7 @@ function base(): Scene {
     totalKills: 0,
     weapon: 'auto',
     combat: 'melee',
+    theme: 'auto',
     awake: true,
     sync: { on: false, machines: 1, at: null, error: null },
     metrics: { ctxPct: null, ctxTokens: null, ctxWindow: 0, limits: [], costUsd: null, burnPerHour: null, startedAt: T0 },
@@ -129,5 +130,6 @@ function args(over: Partial<Scene>, now: number): PanelArgs {
     onPick: () => undefined,
     onCombat: () => undefined,
     onSync: () => undefined,
+    onTheme: () => undefined,
   }
 }

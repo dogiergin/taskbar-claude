@@ -6,8 +6,9 @@
 
 import type { ElementConstructor, ElementTable, RenderElement, SelectProps, SvgProps, ThemeKey } from 'claude-code'
 
-import type { Limit, Scene, WeaponChoice } from '../types'
+import type { Limit, Scene, ThemeChoice, WeaponChoice } from '../types'
 import type { Chip } from './chips'
+import { themeFor } from './winter'
 import { RANK_NAMES, WEAPONS, WEAPON_NAMES, isUnlocked, levelProgress, rankFor } from './level'
 
 type Lang = 'tr' | 'en'
@@ -123,6 +124,8 @@ const COLS = {
     locked: (lv: number) => `Sv ${lv}`,
     lockedMore: (n: number, name: string, lv: number) => `+${n} kilitli · ${name} Sv ${lv}`,
     weaponTitle: 'SİLAH',
+    winter: '❄ Kış',
+    classic: '🏙 Şehir',
     syncOff: 'PC senkronu: kapalı',
     syncError: 'PC senkronu: hata',
     syncWaiting: 'PC senkronu: bağlanıyor…',
@@ -166,6 +169,8 @@ const COLS = {
     locked: (lv: number) => `Lv ${lv}`,
     lockedMore: (n: number, name: string, lv: number) => `+${n} locked · ${name} Lv ${lv}`,
     weaponTitle: 'WEAPON',
+    winter: '❄ Winter',
+    classic: '🏙 City',
     syncOff: 'PC sync: off',
     syncError: 'PC sync: error',
     syncWaiting: 'PC sync: connecting…',
@@ -254,6 +259,8 @@ export type PanelArgs = {
   onCombat: () => void
   /** Turns sharing the kill count between computers on or off. */
   onSync: () => void
+  /** Picks the scenery. */
+  onTheme: (theme: ThemeChoice) => void
 }
 
 /**
@@ -530,6 +537,7 @@ function details(E: Els, a: PanelArgs): RenderElement {
     ...unlocked.map(w => ({ value: w.kind, label: names[w.kind] })),
   ]
   const picked = options.some(o => o.value === a.s.weapon) ? a.s.weapon : 'auto'
+  const shownTheme = themeFor(a.s.theme, new Date(a.now))
   // The picker, and beside it the button that folds the panel away.
   const armoury: RenderElement[] = [
     // The picker on the left, the way back to the fight pushed to the right.
@@ -565,6 +573,25 @@ function details(E: Els, a: PanelArgs): RenderElement {
                 }),
               ),
             }),
+        // The scenery, where a vector scene draws it: the shown one lit.
+        ...(a.Svg
+          ? [
+              Box({
+                key: 'theme-buttons',
+                flexDirection: 'row',
+                columnGap: 1,
+                flexShrink: 0,
+                children: (['winter', 'classic'] as const).map(k =>
+                  Button({
+                    key: `theme-${k}`,
+                    label: c[k],
+                    variant: shownTheme === k ? 'primary' : 'secondary',
+                    onPress: () => a.onTheme(k),
+                  }),
+                ),
+              }),
+            ]
+          : []),
         // Wide padding makes the main action a bigger target; the text cannot grow.
         Button({ key: 'usage-close', label: `   ${t.backToBattle}   `, variant: 'primary', onPress: a.onToggle }),
       ],

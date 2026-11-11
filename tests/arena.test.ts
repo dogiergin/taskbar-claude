@@ -1,11 +1,13 @@
 import { expect, test } from 'claude-code/testing'
 
-import { levelFor, levelProgress, rankFor, weaponInHand } from '../hooks/level'
-import { gearTier } from '../hooks/weapons'
+import { WEAPONS, levelFor, levelProgress, rankFor, weaponInHand } from '../hooks/level'
+import { gearTier, isRanged } from '../hooks/weapons'
 import { detectLang } from '../hooks/lang'
 import { machineCount, mergeOwn, othersKills, parseLedger } from '../hooks/sync'
 import { chipAt } from '../hooks/chips'
 import type { Chip } from '../hooks/chips'
+import { arenaSvg } from '../hooks/svg'
+import { themeFor } from '../hooks/winter'
 
 const band = (isWorking: boolean, maxRows = 14, bodyColumns = 100) => ({
   plugin: 'taskbar-claude',
@@ -290,4 +292,54 @@ test('VS Code draws the chips as the desktop reads them: only the acting ones ar
   const scene = (await arena(ui))?.props as { width?: number } | undefined
   expect(scene?.width).toBeUndefined()
   await ui.unmount()
+})
+
+test('winter comes from November through February unless the setting pins a theme', async () => {
+  expect(themeFor('auto', new Date(2026, 11, 24))).toBe('winter')
+  expect(themeFor(undefined, new Date(2027, 1, 10))).toBe('winter')
+  expect(themeFor('auto', new Date(2026, 6, 1))).toBe('classic')
+  expect(themeFor('winter', new Date(2026, 6, 1))).toBe('winter')
+  expect(themeFor('classic', new Date(2026, 11, 24))).toBe('classic')
+})
+
+test('the winter scenes: a snowy forest, a Santa hat, and a sleigh over the camp', async () => {
+  for (const mode of ['fight', 'win', 'camp', 'sleep', 'wake'] as const) {
+    const svg = arenaSvg(mode, 1200, ['katana', 'ak47'], 4, 'winter')
+    expect(svg.length).toBeLessThan(131_072)
+    expect(svg.includes('pineNear')).toBe(true)
+    expect(svg.includes('flake')).toBe(true)
+    expect(svg.includes('class="fly"')).toBe(mode === 'camp' || mode === 'sleep' || mode === 'wake')
+  }
+  expect(arenaSvg('fight', 1200, ['katana'], 0, 'winter').includes('class="santa"')).toBe(true)
+  expect(arenaSvg('fight', 1200, ['katana'], 0, 'classic').includes('pineNear')).toBe(false)
+})
+
+test('the weapon card switches the scenery between winter and the city, and keeps the pick', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 40, 120), surface: 'vscode' })
+  await openPanel(ui, 'vscode')
+  await ui.press({ key: 'theme-classic' })
+  const svgOf = async () => {
+    await ui.press({ key: 'usage-close' })
+    const src = String(((await arena(ui))?.props as { source?: string } | undefined)?.source)
+    await openPanel(ui, 'vscode')
+    return src
+  }
+  expect((await svgOf()).includes('pineNear')).toBe(false)
+  await ui.press({ key: 'theme-winter' })
+  expect((await svgOf()).includes('pineNear')).toBe(true)
+  await ui.unmount()
+})
+
+test('the terminal panel offers no theme switch: its pixel arena has one look', TR, async $ => {
+  const ui = await $.ui.mount({ ...band(true, 40, 120), surface: 'terminal' })
+  await openPanel(ui, 'terminal')
+  expect(await ui.find({ key: 'theme-winter' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('with every weapon in the rotation the widest winter fight still fits the size limit', async () => {
+  const all = WEAPONS.map(w => w.kind)
+  for (const set of [all.filter(k => !isRanged(k)), all.filter(isRanged)]) {
+    expect(arenaSvg('fight', 1200, set, 4, 'winter').length).toBeLessThan(131_072)
+  }
 })

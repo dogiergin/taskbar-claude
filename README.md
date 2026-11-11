@@ -2,7 +2,7 @@
 
 > **Unofficial.** A community plugin for Claude Code. It is not made, endorsed or supported by Anthropic. *Gayriresmi: Anthropic ile bağlantısı olmayan bir topluluk eklentisidir.*
 
-**Claude fights bugs above your prompt while it works.** A smooth animated arena for Claude Code, with levels, 18 weapons, a campfire between turns, and a live readout of your context window, usage limits and plan.
+**Claude fights bugs above your prompt while it works.** A smooth animated arena for Claude Code, with levels, 22 weapons, a campfire between turns, and a live readout of your context window, usage limits and plan.
 
 ![Claude slashing bugs](docs/fight.svg)
 
@@ -37,7 +37,7 @@ Needs Claude Code **2.1.287 or later** (mods).
 - **A fight that never restarts.** From the moment you send a prompt until Claude is done, the scene plays as one continuous, smooth loop: bugs come at irregular times and Claude meets each with the strike that suits it: slash, jump chop, spin or dash thrust.
 - **Four kinds of bugs:** spiked beetles, eight-legged spiders, two-legged four-armed mantises and wasps in the air.
 - **Melee or ranged.** Switch with the **STYLE** chip: blades, or guns with muzzle flash, tracers and recoil.
-- **18 weapons** unlocked by level: katana, longsword, battle axe, mace, scimitar, warhammer, spear, halberd, trident, scythe, the legendary dragon and frost blades; Walther PPK (007), Desert Eagle, dual Berettas, AK-47, minigun and a space blaster.
+- **22 weapons** unlocked by level: katana, longsword, battle axe, mace, scimitar, warhammer, spear, halberd, trident, scythe, flail, plasma sword, the legendary dragon and frost blades; Walther PPK (007), a bow whose arrows fly, Desert Eagle, dual Berettas, AK-47, pump shotgun, minigun and a space blaster.
 - **100 levels and ranks:** Rookie, Mid (30), Experienced (70) and Legend (100). Gear comes with rank: a headband at 30, helm, cape and shield at 70, gold at 85, a crown at 100.
 - **A camp between turns.** Claude sleeps in a bedroll when a session starts, wakes on your first prompt, and rests by the campfire with a dog and a cat between turns.
 - **Token snacks.** Now and then Claude taps the usage bar and eats a piece of the context block.
@@ -48,6 +48,14 @@ Needs Claude Code **2.1.287 or later** (mods).
 |---|---|
 | ![Guns](docs/ranged.svg) | ![Camp](docs/camp.svg) |
 | ![Victory](docs/victory.svg) | ![Melee with a katana](docs/melee.svg) |
+
+### Winter
+
+From November through February the city gives way to a snowy pine forest: snow falls, Claude wears a Santa hat, and Santa's reindeer sleigh flies over the camp. Set `theme` to `winter` or `classic` to keep one all year.
+
+| | |
+|---|---|
+| ![Fighting in the snowy forest](docs/winter-fight.svg) | ![Santa's sleigh over the winter camp](docs/winter-camp.svg) |
 
 ## Where it draws
 
@@ -70,6 +78,7 @@ To share it **between computers**, open the details and press **↻ PC sync** on
 | Option | Values | Default |
 |---|---|---|
 | `language` | `auto`, `tr`, `en` | `auto` |
+| `theme` | `auto` (winter Nov–Feb), `winter`, `classic` | `auto` |
 | `sync` | `off`, `on` | `off` |
 
 ## Safety
@@ -91,7 +100,7 @@ claude plugin test .
 
 ## 🇹🇷 Türkçe
 
-**Claude çalışırken prompt kutusunun üstünde böceklerle savaşıyor.** Claude Code için akıcı animasyonlu bir arena: seviyeler, 18 silah, turlar arasında kamp ateşi ve bağlam penceresi, kullanım limitleri ve planın canlı göstergesi.
+**Claude çalışırken prompt kutusunun üstünde böceklerle savaşıyor.** Claude Code için akıcı animasyonlu bir arena: seviyeler, 22 silah, turlar arasında kamp ateşi ve bağlam penceresi, kullanım limitleri ve planın canlı göstergesi.
 
 ### Kurulum
 
@@ -119,9 +128,10 @@ Claude Code çalışırken ne kadar harcadığınızı pek göstermez. Task Bar 
 
 - **Hiç baştan başlamayan savaş:** Prompt'u gönderdiğiniz andan iş bitene kadar sahne tek, kesintisiz bir döngü. Böcekler düzensiz aralıklarla gelir, Claude her birini ona uygun vuruşla karşılar.
 - **Yakın / Uzak:** **MOD** kutusuyla kılıçlar ile silahlar arasında geçiş yapılır.
-- **18 silah**, **100 seviye**, rütbeler: Çaylak, Orta (30), Deneyimli (70), Efsane (100). Rütbeyle gelen kıyafetler: Sv 30'da bant, Sv 70'te miğfer, pelerin ve kalkan, Sv 85'te altın, Sv 100'de taç.
+- **22 silah** (yay-ok, pompalı tüfek, zincirli gürz ve plazma kılıcı dahil), **100 seviye**, rütbeler: Çaylak, Orta (30), Deneyimli (70), Efsane (100). Rütbeyle gelen kıyafetler: Sv 30'da bant, Sv 70'te miğfer, pelerin ve kalkan, Sv 85'te altın, Sv 100'de taç.
 - **Kamp:** Oturum başında uyku, ilk prompt'ta uyanış, turlar arasında köpek ve kediyle ateş başında dinlenme.
 - **Kullanım göstergesi:** Bağlam, 5 saatlik ve haftalık limitler. Abonelikte faturaymış gibi görünen dolar tutarı yerine *ek ücret yok* yazar.
+- **Kış teması:** Kasım–Şubat arası şehir yerine karlı çam ormanı, yağan kar, Claude'un başında Noel şapkası ve kampın üstünden geçen Noel Baba'nın geyikli kızağı. `theme` ayarıyla (`winter` / `classic`) bütün yıl sabitlenebilir.
 - Claude'a yazdığınız dile göre **Türkçe ya da İngilizce**.
 
 ### Bilgisayarlar arası sayım (isteğe bağlı)
